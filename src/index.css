@@ -1,0 +1,132 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource/vazirmatn/400.css";
+@import "@fontsource/vazirmatn/500.css";
+@import "@fontsource/vazirmatn/700.css";
+
+:root {
+  --accent: #ffffff;
+  --accent-rgb: 255, 255, 255;
+  --eye: #ffffff;
+  --panel: #000000;
+  --popup-bg: rgba(20, 20, 24, 0.96);
+  --popup-border: rgba(255, 255, 255, 0.12);
+  --fg: #f4f4f5;
+  --fg-dim: rgba(244, 244, 245, 0.62);
+  --fg-faint: rgba(244, 244, 245, 0.38);
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-2: rgba(255, 255, 255, 0.09);
+  --line: rgba(255, 255, 255, 0.09);
+  --font: "Inter Variable", "Vazirmatn", system-ui, "Segoe UI", sans-serif;
+}
+:root.light {
+  --panel: #f4f4f6;
+  --popup-bg: rgba(255, 255, 255, 0.98);
+  --popup-border: rgba(0, 0, 0, 0.12);
+  --fg: #111114;
+  --fg-dim: rgba(17, 17, 20, 0.65);
+  --fg-faint: rgba(17, 17, 20, 0.4);
+  --surface: rgba(0, 0, 0, 0.045);
+  --surface-2: rgba(0, 0, 0, 0.08);
+  --line: rgba(0, 0, 0, 0.1);
+}
+:root.fa { --font: "Vazirmatn", "Inter Variable", system-ui, sans-serif; }
+
+html, body, #root { height: 100%; margin: 0; background: transparent; overflow: hidden; }
+body { font-family: var(--font); color: var(--fg); -webkit-font-smoothing: antialiased; }
+
+/* Browser preview only: a neutral "desktop" so the black island is visible. */
+.preview-desktop {
+  background:
+    radial-gradient(1200px 600px at 70% 110%, #1b2a3d 0%, transparent 60%),
+    radial-gradient(900px 500px at 10% 100%, #2a1b3d 0%, transparent 60%),
+    #11151c;
+}
+
+/* The island must never act as a draggable window region. */
+.ns-island, .ns-island * { -webkit-app-region: no-drag; -webkit-user-drag: none; user-select: none; }
+.ns-island input, .ns-island textarea, .ns-select-ok { user-select: text; }
+.ns-island img { pointer-events: none; }
+
+.scroll { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--surface-2) transparent; }
+.scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 99px; }
+
+.surface { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; }
+.muted { color: var(--fg-dim); }
+.faint { color: var(--fg-faint); }
+.label { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-faint); font-weight: 600; }
+:root.fa .label { letter-spacing: 0; text-transform: none; font-size: 11.5px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 14px;
+  border-radius: 999px; background: var(--surface-2); color: var(--fg); font-size: 12.5px; font-weight: 500;
+  border: 1px solid var(--line); cursor: pointer; transition: background-color .15s, transform .15s, opacity .15s; white-space: nowrap;
+}
+.btn:hover { background: color-mix(in srgb, var(--fg) 14%, transparent); }
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: 0.4; pointer-events: none; }
+.btn-accent { background: var(--accent); color: var(--panel); border-color: transparent; }
+.btn-accent:hover { opacity: 0.9; }
+.btn-danger { color: #ff6b6b; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 999px;
+  color: var(--fg-dim); background: transparent; border: 0; cursor: pointer; transition: background-color .15s, color .15s, transform .15s;
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--fg); }
+.icon-btn:active { transform: scale(0.92); }
+.input {
+  width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px;
+  color: var(--fg); font-size: 13px; outline: none; font-family: inherit; transition: border-color .15s;
+}
+.input:focus { border-color: rgba(var(--accent-rgb), 0.6); }
+.input::placeholder { color: var(--fg-faint); }
+select.input option { background: var(--panel); color: var(--fg); }
+
+input[type="range"] { accent-color: var(--accent); width: 100%; height: 4px; cursor: pointer; }
+input[type="color"] { width: 34px; height: 26px; border: 1px solid var(--line); border-radius: 8px; background: none; padding: 0; cursor: pointer; }
+
+/* ---------- NOVA eyes ---------- */
+.eyes { display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.eye {
+  width: calc(var(--es, 1) * 7px); height: calc(var(--es, 1) * 13px); border-radius: 999px; background: var(--eye-c, var(--eye));
+  transform: translate(var(--lx, 0px), var(--ly, 0px));
+  transition: transform 0.09s cubic-bezier(0.2, 0, 0, 1), height 0.22s ease, width 0.22s ease, border-radius 0.22s ease, opacity 0.35s, background-color 0.35s;
+  will-change: transform, opacity;
+}
+.eyes.blink .eye { transform: translate(var(--lx, 0px), var(--ly, 0px)) scaleY(0.08); }
+.eyes[data-mood="idle"] .eye { animation: eye-idle 6s ease-in-out infinite; }
+.eyes[data-mood="thinking"] .eye { animation: eye-think 2.6s ease-in-out infinite; }
+.eyes[data-mood="working"] .eye { animation: eye-work 0.9s ease-in-out infinite; }
+.eyes[data-mood="working"] .eye:last-child { animation-delay: 0.45s; }
+.eyes[data-mood="attention"] .eye { animation: eye-attn 2.2s ease-in-out infinite; }
+.eyes[data-mood="curious"] .eye:first-child { transform: translate(var(--lx, 0px), var(--ly, 0px)) scale(1.12, 1.18) translateX(-1px); }
+.eyes[data-mood="curious"] .eye:last-child { transform: translate(var(--lx, 0px), var(--ly, 0px)) scale(0.92, 0.95) translateX(1px); }
+.eyes[data-mood="sleep"] .eye { transform: scaleY(0.14) !important; opacity: 0.32; animation: eye-sleep 5s ease-in-out infinite; }
+.eyes[data-mood="error"] { --eye-c: #ff5d5d; }
+.eyes[data-mood="error"] .eye:first-child { transform: translate(var(--lx, 0px), var(--ly, 0px)) rotate(16deg); animation: eye-shake 0.5s ease 1; }
+.eyes[data-mood="error"] .eye:last-child { transform: translate(var(--lx, 0px), var(--ly, 0px)) rotate(-16deg); animation: eye-shake 0.5s ease 1; }
+.eyes[data-mood="success"] .eye, .eyes[data-mood="happy"] .eye {
+  height: calc(var(--es, 1) * 7px); width: calc(var(--es, 1) * 13px); background: transparent; box-shadow: none;
+  border: calc(var(--es, 1) * 3px) solid var(--eye-c, var(--eye)); border-bottom: 0; border-radius: 999px 999px 0 0;
+  transform: translate(var(--lx, 0px), var(--ly, 0px));
+}
+.eyes.blink[data-mood="success"] .eye, .eyes.blink[data-mood="happy"] .eye { transform: translate(var(--lx, 0px), var(--ly, 0px)) scaleY(0.2); }
+.lowres .eye, .lowres .anim { animation: none !important; }
+
+@keyframes eye-idle { 0%, 100% { opacity: 0.82; } 50% { opacity: 1; } }
+@keyframes eye-think { 0%, 100% { transform: translateX(calc(var(--es,1) * -2.5px)); opacity: 0.6; } 50% { transform: translateX(calc(var(--es,1) * 2.5px)); opacity: 1; } }
+@keyframes eye-work { 0%, 100% { transform: scaleY(1); opacity: 1; } 50% { transform: scaleY(0.55); opacity: 0.7; } }
+@keyframes eye-attn { 0%, 100% { opacity: 1; transform: scale(1); } 10% { opacity: 0.2; } 20% { opacity: 1; transform: scale(1.18); } 30% { opacity: 0.2; } 40% { opacity: 1; transform: scale(1.18); } 55% { transform: scale(1); } }
+@keyframes eye-sleep { 0%, 100% { opacity: 0.22; } 50% { opacity: 0.4; } }
+@keyframes eye-shake { 0%, 100% { translate: 0; } 25% { translate: -2px 0; } 75% { translate: 2px 0; } }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse-dot { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+.pulse-dot { animation: pulse-dot 1.4s ease-in-out infinite; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line); font-size: 11px; font-weight: 500; color: var(--fg-dim); white-space: nowrap;
+}
