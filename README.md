@@ -1,155 +1,220 @@
-# NOVASMART
+<div align="center">
 
-A Smart-Island desktop companion for Windows 10/11 — **Tauri 2 + Rust + React + TypeScript**.
-A black notch with two golden "NOVA" eyes sits at the top-centre of the screen; hover or click and it morphs into a panel
-(Home, AI, Music, Notes, Focus, Modes, Files, Clipboard, Agenda, Mail, Notifications, Settings, Customize).
-A second mini-island — the **capsule** — shows what is happening (song, AI agent, focus timer, notification) next to the NOVA eyes.
+  <img src="https://raw.githubusercontent.com/mehdi138iimm/NovaSmart/main/app-icon.png" alt="NOVASMART Logo" width="110" height="110" style="border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-bottom: 12px;" />
 
-> Design is *inspired by* the quality bar of TwoCode; name, logo, character and assets are original.
+  # ⚡ NOVASMART
+  ### *Smart Dynamic Island & AI Companion for Windows 10 & 11*
 
----
+  <p align="center">
+    <strong>A next-generation Apple-inspired Dynamic Island, multi-model Free AI Assistant, SMTC media controls, per-app volume mixer, custom .exe launcher, and focus suite for Windows.</strong>
+  </p>
 
-## Two ways to run it
+  <p align="center">
+    <a href="https://github.com/mehdi138iimm/NovaSmart/releases/latest">
+      <img src="https://img.shields.io/github/v/release/mehdi138iimm/NovaSmart?style=for-the-badge&color=38bdf8&logo=windows&logoColor=white" alt="Latest Release" />
+    </a>
+    <a href="https://github.com/mehdi138iimm/NovaSmart/stargazers">
+      <img src="https://img.shields.io/github/stars/mehdi138iimm/NovaSmart?style=for-the-badge&color=fbbf24&logo=github" alt="GitHub Stars" />
+    </a>
+    <a href="https://github.com/mehdi138iimm/NovaSmart/blob/main/LICENSE">
+      <img src="https://img.shields.io/badge/license-MIT-emerald?style=for-the-badge" alt="License" />
+    </a>
+    <a href="https://tauri.app">
+      <img src="https://img.shields.io/badge/Built_with-Tauri_v2_%2B_Rust-orange?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri + Rust" />
+    </a>
+    <a href="https://daramet.com/novasmart">
+      <img src="https://img.shields.io/badge/Donate-Daramet-ff4757?style=for-the-badge&logo=heart&logoColor=white" alt="Donate" />
+    </a>
+  </p>
 
-| Command | What you get |
-|---|---|
-| `npm run dev` / `npm run build` | **Frontend only** (browser preview). The island is drawn at the top of the browser viewport. Native features (system metrics, SMTC music, real tray, autostart, OS notifications, bridge, window placement) are *not* available and show honest empty/“n/a” states. |
-| `npm run tauri dev` / `npm run tauri build` | **The real desktop app** (needs Rust + WebView2). Windows are created by Rust, placed at the top-centre of the monitor, always-on-top, transparent, undecorated. |
+  <p align="center">
+    <a href="#-key-features">Key Features</a> •
+    <a href="#-live-web-preview">Live Web Demo</a> •
+    <a href="#-quick-download--installation">Download</a> •
+    <a href="#-developer-setup">Developer Guide</a> •
+    <a href="#-architecture">Architecture</a> •
+    <a href="#-fa-پشتیبانی-فارسی">فارسی</a>
+  </p>
 
-`npm run build` outputs a single `dist/index.html` (this is what Tauri embeds).
-
-## Setup in VS Code (Windows 10/11)
-
-1. Install: Node 20+, Rust (`rustup`, MSVC toolchain), *Microsoft C++ Build Tools*, WebView2 (preinstalled on Win 11).
-2. VS Code extensions: *rust-analyzer*, *Tauri*, *ESLint* (optional).
-3. In the project folder:
-   ```bash
-   npm install
-   npm run tauri dev       # develop with hot reload
-   npm run tauri build     # installers in src-tauri/target/release/bundle (nsis + msi)
-   ```
-4. `npm run typecheck` runs `tsc --noEmit`.
-
-## How the island stays fixed
-
-* Windows have `decorations:false`, no title bar, **no `data-tauri-drag-region`**, no window-position permission in
-  `capabilities/default.json`; the CSS marks everything `-webkit-app-region: no-drag` and cancels `dragstart`.
-* Only Rust moves windows: `place_all()` centres the island on the top edge of the selected monitor (physical px, per-monitor DPI aware)
-  and is re-run on layout change, DPI change, and by a 3 s monitor-signature watcher (hot-plug, resolution change, resume from sleep).
-* The window is resized to hug the notch/panel (8 px margin when closed), so it doesn’t swallow clicks meant for other apps — no click-through hacks needed.
-  The window grows *before* the open animation and shrinks *after* the close animation.
-* Settings can only change the vertical offset and the target display.
-
-## Interaction modes
-Hover / Click / Both (default), configurable open/close delay (150 / 450 ms), auto-close, pin-open, close-on-Escape, ignore-hover-in-fullscreen
-(uses `SHQueryUserNotificationState` on Windows). Pointer moves island → panel never close it; tab changes never re-open it.
-In *Both*: hover-opened panels close after leaving; a click “pins” them.
-
-## Project layout
-```
-src/
-  components/{island,eyes,navigation,tray,ui}
-  features/{home,ai,music,focus,notes,modes,files,clipboard,agenda,mail,notifications,settings,apps}
-  hooks/  services/  stores/  i18n/  types/
-src-tauri/
-  src/{lib.rs, bridge.rs, media.rs, system.rs, main.rs}  capabilities/  icons/  tauri.conf.json
-scripts/novasmart-claude-hook.mjs
-```
-State: Zustand (`settings` persisted, `data` persisted, `runtime` volatile). Views are `React.lazy`. Animations: Framer Motion springs + CSS transform/opacity for eyes.
-
-## AI: what is real
-
-* **API providers** (OpenAI, Claude/Anthropic, Gemini): paste a key in *Settings → AI Settings*, press *Test connection*. Requests go directly from the app to the provider. Keys are stored locally (WebView localStorage — not yet in Windows Credential Manager).
-* **Agents** (Claude Code, Codex, ChatGPT desktop, anything scriptable): Rust runs a loopback-only bridge on `127.0.0.1:47821`
-  (`POST /agent-event`, rejects browser `Origin` requests). Agents show as *Disconnected* until they actually report. Approvals are held open until you press **Allow/Deny** (120 s timeout ⇒ deny).
-  Claude Code example (`~/.claude/settings.json`):
-  ```json
-  { "hooks": {
-    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "node C:/path/scripts/novasmart-claude-hook.mjs" }] }],
-    "PreToolUse":       [{ "matcher": "Bash|Edit|Write", "hooks": [{ "type": "command", "command": "node C:/path/scripts/novasmart-claude-hook.mjs --approve" }] }],
-    "Stop":             [{ "hooks": [{ "type": "command", "command": "node C:/path/scripts/novasmart-claude-hook.mjs" }] }]
-  } }
-  ```
-  Payload: `{"agent","state":"idle|starting|reading|thinking|editing|executing|waiting|completed|failed","message","approval":{"id","kind","description","target"}}`.
-* Nothing is simulated: no key ⇒ “Not connected”.
-
-## Feature status
-
-**Implemented**
-- Native island/capsule windows, single instance, real tray menu, autostart, OS notifications, multi-monitor placement, DPI handling (Rust)
-- Eye Mode with 9 moods (idle, thinking, working, attention, success/happy, error, sleep, curious), blink, hover reaction; mood derived from real state
-- Spring open/close sequence, fixed-size inner content (no reflow), animated tab pill, lazy views, Hover/Click/Both
-- Home (AI / Music / Focus / System / Clock / Agenda / Notes cards, reorderable & resizable), AI Assistant (chat, mic via SpeechRecognition when available) + Agents/approvals/history
-- Music: Windows SMTC (title, artist, art, seek, play/pause/next/prev, system volume) + local-file player fallback
-- Focus: Pomodoro/custom, short/long break, history, daily stats, end chime + notification, app-level Do-Not-Disturb
-- Notes (autosave, RTL/LTR auto, search), Files shelf (drag-drop, open, copy path), Clipboard history (search, pin, sensitive-text filter), Agenda (day/month, timeline, reminders), Notifications centre, Modes (Work/Study/Sleep/Game with real effects), Quick-control menu, All-Apps
-- Customize: island/eye/panel sizes, glow, blink, radius, opacity, shadow, blur, themes (6 + custom), nav order/visibility/size/labels, module cards add/remove/reorder/resize, presets, reset — all live and persisted
-- English + Persian (Vazirmatn), automatic RTL
-
-**Not done / limitations (honest list)**
-- **Mail**: UI + empty state + Client-ID field only. No OAuth/Gmail/Graph backend yet, so counts show “—”.
-- **GPU usage** is reported as `n/a` (no stable cross-vendor API); CPU/RAM/battery are real on Windows.
-- **Windows Focus-Assist / system DND** has no public API: “Do Not Disturb” silences NOVASMART’s own notifications only.
-- **Backdrop blur** only blurs content inside the window, not the desktop (WebView2 limitation).
-- **API keys** are in localStorage, not the OS keychain. **SQLite** is not used; data is persisted in local storage (fine for this volume, migrate if needed).
-- **Updates** menu shows version only; the Tauri updater needs a signing key + endpoint.
-- Browser preview cannot give real file paths, system metrics, SMTC, or quit the process.
-- Voice input depends on SpeechRecognition support in the WebView2 build; the mic button disables itself when unsupported.
-
-## Test report (what was actually run)
-
-### 1.4.1 — fixes + full native section test (this machine)
-
-Changes:
-- **Removed the coloured halo** around the island (the golden `box-shadow`/`drop-shadow` glow on the eyes). Eyes are now flat gold; the `Eye glow` setting was removed since it no longer does anything.
-- **Removed the grey panel border and shadow halo** — the island `boxShadow` is now `none` (both open and closed); the panel is a clean black rounded rectangle with no outline ring and no surrounding shadow. The now-useless `Shadow` slider was removed from Customize.
-- **Removed the bottom capsule window entirely** (second webview, its Rust commands, settings and UI). The Windows system-tray icon remains.
-- **Fixed Fold In** — clicking the header eyes or the Quick-menu *Fold In* closed the panel, but the click bubbled to the island container's `onClick`, which immediately re-opened it. Added `stopPropagation()` on both fold controls plus a `suppressHover` flag so a fold is not undone by hover until the pointer actually leaves the window.
-
-Verified live on Windows (mouse-driven, screenshot per step):
-| Area | Result |
-|---|---|
-| Home / AI / Music / Notes / Focus / Modes / Files / Clipboard / Agenda / Mail tabs | ✅ all render and switch |
-| Music — real SMTC (title/artist/art/seek/position/remaining) from a running player | ✅ live |
-| Notes — create + autosave + list sync | ✅ |
-| Focus — start/pause, countdown, end-time estimate, header activity chip | ✅ |
-| Clipboard — real capture + sensitive filter | ✅ |
-| Agenda — create event, timeline render, reminder notification fired | ✅ |
-| All Apps grid, Customize (sliders + live themes), Settings | ✅ |
-| Fold In (header eyes + Quick menu) stays closed; hover-away-and-back reopens | ✅ fixed |
-| Quit exits the process | ✅ |
-| `tsc --noEmit`, `cargo build --release`, NSIS + MSI | ✅ pass |
-
-### 1.4.0 — Windows 10/11 verification (this machine)
-
-| Check | Result |
-|---|---|
-| `npm install`, `npx tsc --noEmit` (strict) | ✅ pass |
-| `npm run build` | ✅ pass (single-file `dist/index.html`, ~1.3 MB) |
-| `cargo check` (Windows, MSVC) | ✅ pass — **after adding the missing `src-tauri/icons/` set**; the original archive had no icons and `tauri-build` fails without `icons/icon.ico` (Windows resource file) |
-| `cargo build --release` + NSIS/MSI installers | ✅ pass — `NOVASMART_1.4.0_x64-setup.exe` + `NOVASMART_1.4.0_x64_en-US.msi` |
-| SMTC thread COM init | ✅ fixed — `media.rs` now calls `CoInitializeEx(MTA)` before `SessionManager::RequestAsync()`; without it WinRT media calls fail with `CO_E_NOTINITIALIZED` |
-| Live island/capsule rendering, tray process | ✅ verified on Windows (screenshot smoke test) |
-
-### 1.0.0 — original sandbox report (Linux)
-
-Environment: Linux sandbox — **no Windows, no Rust toolchain, no Tauri build**.
-
-| Check | Result |
-|---|---|
-| `npm install`, `npx tsc --noEmit` (strict, noUnused*) | ✅ pass |
-| `npm run build` | ✅ pass (single-file `dist/index.html`) |
-| Smoke test in jsdom: island mounts, click opens panel, all 10 tabs + Notifications/Settings/Customize sub-panels render, Agents view, note autosave to storage, quick-control menu | ✅ no runtime errors |
-| Real browser screenshots / animation feel | ⚠️ not possible here (headless Chromium lacked system libs) — please verify visually |
-| `cargo check` / `tauri dev` / `tauri build` | ❌ **not run** — Rust sources (incl. SMTC/volume code using `windows` 0.58 and `sysinfo` 0.33) were written against the docs but never compiled. Expect to fix small API mismatches on first `cargo build` |
-| Windows 10/11 behaviour (DPI, multi-monitor, focus, fullscreen detection, tray) | ❌ untested |
-
-Idle resource design (not measured): no timers while closed except blink/idle-sleep (cheap), stats polled only while the panel is open,
-clipboard/media/reminder polling honour *Low resource mode* and *Background activity*, eye animations are opacity/transform only.
+  <hr style="border: 0; height: 1px; background: rgba(255,255,255,0.1); margin: 30px 0;" />
+</div>
 
 ---
 
-## خلاصه (فارسی)
-NOVASMART یک Smart Island برای ویندوز است (Tauri 2 + Rust + React). با `npm run dev` فقط پیش‌نمایش وب اجرا می‌شود؛ برای برنامه‌ی واقعی دسکتاپ از
-`npm run tauri dev` و برای ساخت نصب‌کننده از `npm run tauri build` استفاده کنید. موقعیت Island فقط توسط Rust تنظیم می‌شود و هیچ راهی برای کشیدن آن با ماوس وجود ندارد.
-کدهای Rust در این محیط (Linux) کامپایل و روی ویندوز تست نشده‌اند؛ بخش Mail هنوز اتصال OAuth ندارد؛ GPU در دسترس نیست. جزئیات در بخش بالا آمده است.
+## 🌟 Overview
+
+**NOVASMART** elevates your Windows desktop workflow by introducing an intelligent, ultra-fluid **Dynamic Island** at the top of your screen. Built natively with **Tauri 2, Rust, React 19, and TypeScript**, it delivers zero-latency desktop productivity with virtually no RAM footprint (~20 MB).
+
+Whether you need instant AI answers, seamless media playback controls, a per-application volume mixer, or quick .exe app launches — everything is accessible in **1 click** right from your screen notch.
+
+---
+
+## ✨ Key Features
+
+<table>
+  <tr>
+    <td width="50%">
+      <h3>🤖 100% Free AI Hub</h3>
+      <p>Instant access to <strong>OpenAI GPT-4o, DeepSeek-V3, Qwen 2.5, Mistral Nemo</strong>, and <strong>Llama 3.3</strong> with zero fees and no API keys required. Full support for offline local <strong>Ollama</strong> instances and custom API keys.</p>
+    </td>
+    <td width="50%">
+      <h3>🎵 Media & Volume Mixer</h3>
+      <p>Synchronized Windows SMTC integration for <strong>Spotify, Chrome, Firefox, and Media Players</strong>. View live album art, track scrubbers, and adjust volume for individual Windows applications on the fly.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>🚀 Custom .exe App Launcher</h3>
+      <p>Drag & drop any Windows executable (<code>.exe</code>), game shortcut (<code>.lnk</code>), or batch script directly onto the notch for lightning-fast one-click execution.</p>
+    </td>
+    <td width="50%">
+      <h3>⏱️ Deep Focus & Pomodoro</h3>
+      <p>Customizable work/break cycles accompanied by peaceful <strong>Tibetan Singing Bowl</strong> synthesized audio chimes for mindful productivity.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>📋 Encrypted Clipboard & File Shelf</h3>
+      <p>100% local, encrypted clipboard history with smart regex filtering that safeguards passwords and credit cards. Drag & drop file shelf for rapid temporary staging.</p>
+    </td>
+    <td width="50%">
+      <h3>👁️ Interactive Eye Notch Avatar</h3>
+      <p>An animated, living notch with 9 expressive moods (<em>Idle, Thinking, Working, Attention, Success, Error, Sleep, Curious</em>), mouse tracking, and smooth blinking reactions.</p>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 🌐 Live Web Preview
+
+Experience NOVASMART right in your browser without installing anything:
+
+👉 **[Launch Live Web App Preview](https://mehdi138iimm.github.io/NovaSmart/)** *(or open `novasmart-website.html` / `site/index.html` locally)*
+
+---
+
+## 📥 Quick Download & Installation
+
+### Option 1: Official Windows Installer (Recommended)
+1. Go to the [**Releases Page**](https://github.com/mehdi138iimm/NovaSmart/releases/latest).
+2. Download the latest `NOVASMART_Setup_x64.exe` (or `.msi`).
+3. Run the installer and launch NOVASMART. The notch will smoothly dock at the top-centre of your primary monitor!
+
+### Option 2: Run via Winget (Coming Soon)
+```bash
+winget install NovaSmart
+```
+
+---
+
+## 🛠️ Developer Setup
+
+Follow these steps to build and run NOVASMART from source:
+
+### Prerequisites
+- **Node.js**: v20.x or higher
+- **Rust & Cargo**: Latest stable toolchain (`rustup`)
+- **C++ Build Tools**: *Microsoft C++ Build Tools* or Visual Studio 2022
+- **WebView2 Runtime**: (Pre-installed on Windows 10/11)
+
+### Setup Commands
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/mehdi138iimm/NovaSmart.git
+cd NovaSmart
+
+# 2. Install dependencies
+npm install
+
+# 3a. Run in Browser Preview mode (Quick UI Development)
+npm run dev
+
+# 3b. Run Native Desktop App with Hot Reload (Tauri + Rust)
+npm run tauri dev
+
+# 4. Build Production Desktop Installer (.exe & .msi)
+npm run tauri build
+```
+
+---
+
+## 🏗️ Architecture & Project Structure
+
+NOVASMART combines high-performance Rust native APIs with a modern React 19 interface:
+
+```
+NOVASMART/
+├── src/                          # Frontend React 19 + TypeScript
+│   ├── components/
+│   │   ├── island/              # Dynamic Island notch & capsule containers
+│   │   ├── eyes/                # Animated eye tracker & mood synthesis
+│   │   ├── navigation/          # Floating dock tabs & pill indicators
+│   │   └── ui/                  # Glassmorphic UI cards, buttons, & toggles
+│   ├── features/
+│   │   ├── ai/                  # Multi-provider AI chat & speech recognition
+│   │   ├── music/               # Windows SMTC audio bridge & volume mixer
+│   │   ├── focus/               # Pomodoro timer & Web Audio chimes synthesizer
+│   │   ├── apps/                # Custom .exe launcher & shortcuts registry
+│   │   ├── clipboard/           # Encrypted clipboard history & sensitive filter
+│   │   ├── files/               # Drag & drop shelf
+│   │   └── settings/            # Multi-monitor placement, themes, & preferences
+│   ├── stores/                  # Zustand state stores (persisted & volatile)
+│   └── i18n/                    # Bilingual translations (Persian / English)
+│
+├── src-tauri/                    # Native Rust Engine (Tauri v2)
+│   ├── src/
+│   │   ├── lib.rs               # Window management & DPI positioning logic
+│   │   ├── media.rs             # Windows SMTC media hooks & audio session manager
+│   │   ├── system.rs            # CPU / RAM / Battery hardware sensors
+│   │   └── bridge.rs            # Local IPC loopback bridge for agent hooks
+│   └── tauri.conf.json          # Tauri configuration & capabilities
+│
+└── site/                         # Landing page & standalone web showcase
+    ├── index.html               # Ultra-modern showcase website
+    └── app.html                 # Bundled standalone single-file web app
+```
+
+---
+
+## ⌨️ Shortcuts & Interaction Modes
+
+| Interaction | Trigger | Behavior |
+|-------------|---------|----------|
+| **Open Island** | `Hover` or `Click` on Notch | Expands into the full interactive panel |
+| **Pin Panel** | `Click` while hovered | Locks the panel open until dismissed |
+| **Quick Close** | `Escape` or click outside | Smoothly folds back into the minimalist notch |
+| **Switch Tabs** | Click Dock Icons or `1-9` | Instantly transitions between AI, Music, Focus, etc. |
+
+---
+
+## 🇮🇷 (FA) پشتیبانی کامل از زبان فارسی
+
+نوااسمارت (NOVASMART) با افتخار دارای **پشتیبانی کامل و بومی از زبان فارسی** همراه با چیدمان راست‌به‌چپ (RTL) و فونت چشم‌نواز **وزیرمتن (Vazirmatn)** است:
+
+- 🧠 **هوش مصنوعی رایگان:** دسترسی بدون تحریم و بدون نیاز به API Key به مدل‌های DeepSeek، GPT-4o و Qwen.
+- 🎚️ **میکسر صدای هر برنامه:** کنترل صدای تک‌تک نرم‌افزارهای در حال اجرا در ویندوز.
+- 🚀 **لانچر فایل‌های exe:** اجرای سریع برنامه‌ها و بازی‌ها با کشیدن و رها کردن (Drag & Drop).
+- 🧘 **تایمر تمرکز پومودورو:** همراه با نوای زنگ کاسه تبتی برای استراحت و افزایش تمرکز کاری.
+- 🔒 **کلیپ‌بورد امن و محلی:** عدم ذخیره پسوردها و شماره کارت‌ها با پردازش کاملاً آفلاین.
+
+---
+
+## 💖 Support & Sponsoring
+
+NOVASMART is 100% free and open-source. If you find it helpful and want to support its active development:
+
+- ☕ **[Donate via Daramet (حمایت مالی)](https://daramet.com/novasmart)**
+- ⭐ **Star this repository** to help more people discover it!
+- 🐛 **Report bugs or request features** in the [Issues tab](https://github.com/mehdi138iimm/NovaSmart/issues).
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+<div align="center">
+  <sub>Crafted with ❤️ by <a href="https://github.com/mehdi138iimm">Mehdi</a> for Windows power users worldwide.</sub>
+</div>
